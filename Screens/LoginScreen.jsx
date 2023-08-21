@@ -11,10 +11,18 @@ import {
   Dimensions,
   ImageBackground,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import BackgroundImage from "../assets/images/photo-bg.jpg";
+
+const initialState = {
+  email: "",
+  password: "",
+};
+
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-z.-]+\.[a-z]{2,}$/;
 
 export default LoginScreen = () => {
   const navigation = useNavigation();
@@ -23,6 +31,7 @@ export default LoginScreen = () => {
   const [isFocusedPassword, setIsFocusedPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
+  const [state, setState] = useState(initialState);
 
   const handleKeyboardDidShow = () => {
     setIsShowKeyboard(true);
@@ -49,8 +58,19 @@ export default LoginScreen = () => {
   }, []);
 
   const keyboardHide = () => {
-    setIsShowKeyboard(false);
+    // setIsShowKeyboard(false); //подумать, может нужно убрать, оно лишнее
     Keyboard.dismiss();
+    if (emailRegex.test(state.email)) {
+      // console.log(emailRegex.test(state.email));
+      console.log(state);
+      setState(initialState);
+    } else {
+      // console.log(emailRegex.test(state.email));
+      Alert.alert(
+        "Alert",
+        "Email address is not valid. Example: test@gmail.com"
+      );
+    }
   };
 
   const handleFocusEmail = () => {
@@ -88,10 +108,18 @@ export default LoginScreen = () => {
             behavior={Platform.OS == "ios" ? "padding" : ""}
           >
             <View
-              style={{ ...styles.image, marginBottom: isShowKeyboard ? 60 : 0 }}
+              style={{
+                ...styles.image,
+                marginBottom:
+                  isShowKeyboard && Platform.OS === "android"
+                    ? 60
+                    : isShowKeyboard && Platform.OS === "ios"
+                    ? -250
+                    : 0,
+              }}
             >
               <View style={styles.form}>
-                <Text style={styles.title}>Увійти</Text>
+                <Text style={styles.title}>Log in</Text>
                 <View style={styles.inputWrapper}>
                   <TextInput
                     onFocus={handleFocusEmail}
@@ -101,10 +129,14 @@ export default LoginScreen = () => {
                       borderColor: emailBorderColor,
                       backgroundColor: emailBgColor,
                     }}
-                    placeholder="Адреса електронної пошти"
+                    placeholder="Email address"
                     keyboardType="email-address"
                     autoComplete="email"
                     placeholderTextColor="#BDBDBD"
+                    value={state.email}
+                    onChangeText={(value) =>
+                      setState((prevState) => ({ ...prevState, email: value }))
+                    }
                   />
                   <View style={styles.inputPassword}>
                     <TextInput
@@ -117,14 +149,21 @@ export default LoginScreen = () => {
                       }}
                       secureTextEntry={!showPassword}
                       autoComplete="password"
-                      placeholder="Пароль"
+                      placeholder="Password"
                       placeholderTextColor="#BDBDBD"
+                      value={state.password}
+                      onChangeText={(value) =>
+                        setState((prevState) => ({
+                          ...prevState,
+                          password: value,
+                        }))
+                      }
                     />
                     <Text
                       style={styles.inputText}
                       onPress={handleTogglePassword}
                     >
-                      {showPassword ? "Приховати" : "Показати"}
+                      {showPassword ? "Hide" : "Show"}
                     </Text>
                   </View>
                 </View>
@@ -133,15 +172,17 @@ export default LoginScreen = () => {
                   style={styles.button}
                   onPress={keyboardHide}
                 >
-                  <Text style={styles.buttonText}>Увійти</Text>
+                  <Text style={styles.buttonText}>Log in</Text>
                 </TouchableOpacity>
                 <View style={styles.wrapperQuestion}>
-                  <Text style={styles.questionText}>Немає акаунту?</Text>
+                  <Text style={styles.questionText}>
+                    Don't have an account?
+                  </Text>
                   <Text
                     style={styles.accountText}
                     onPress={() => navigation.navigate("Registration")}
                   >
-                    Зареєструватися
+                    Sign up
                   </Text>
                 </View>
               </View>
@@ -201,7 +242,7 @@ const styles = StyleSheet.create({
     fontStyle: "normal",
     width: "100%",
     height: 50,
-    paddingVertical: 16,
+    paddingVertical: 15,
     paddingHorizontal: 15,
     fontSize: 16,
     borderWidth: 1,
@@ -215,7 +256,7 @@ const styles = StyleSheet.create({
   inputText: {
     fontFamily: "Roboto-Regular",
     position: "absolute",
-    top: "26%",
+    top: "27%",
     right: 16,
     color: "#1B4371",
     fontSize: 16,

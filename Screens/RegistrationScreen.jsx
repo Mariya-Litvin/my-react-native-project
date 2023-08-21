@@ -12,18 +12,23 @@ import {
   TouchableWithoutFeedback,
   Dimensions,
   ImageBackground,
+  Image,
+  Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SvgXml } from "react-native-svg";
+import * as ImagePicker from "expo-image-picker";
 
 import BackgroundImage from "../assets/images/photo-bg.jpg";
+import { iconAdd, iconDelete } from "../assets/images/icons";
 
-const iconAdd = `
-<svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="12.5" cy="12.5" r="12" fill="white" stroke="#FF6C00"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M13 6H12V12H6V13H12V19H13V13H19V12H13V6Z" fill="#FF6C00"/>
-</svg>
-`;
+const initialState = {
+  login: "",
+  email: "",
+  password: "",
+};
+
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-z.-]+\.[a-z]{2,}$/;
 
 export default RegistrationScreen = () => {
   const navigation = useNavigation();
@@ -33,6 +38,8 @@ export default RegistrationScreen = () => {
   const [isFocusedPassword, setIsFocusedPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [state, setState] = useState(initialState);
 
   const handleKeyboardDidShow = () => {
     setIsShowKeyboard(true);
@@ -59,8 +66,19 @@ export default RegistrationScreen = () => {
   }, []);
 
   const keyboardHide = () => {
-    setIsShowKeyboard(false);
+    // setIsShowKeyboard(false); //подумать, может нужно убрать, оно лишнее
     Keyboard.dismiss();
+    if (emailRegex.test(state.email)) {
+      // console.log(emailRegex.test(state.email));
+      console.log(state);
+      setState(initialState);
+    } else {
+      // console.log(emailRegex.test(state.email));
+      Alert.alert(
+        "Alert",
+        "Email address is not valid. Example: test@gmail.com"
+      );
+    }
   };
 
   const handleFocusLogin = () => {
@@ -104,6 +122,29 @@ export default RegistrationScreen = () => {
     setShowPassword(!showPassword);
   };
 
+  const handleImagePick = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled && pickerResult.assets.length > 0) {
+      setSelectedImage(pickerResult.assets[0].uri);
+    }
+  };
+
+  const handleDeleteImage = () => {
+    setSelectedImage(null);
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -114,19 +155,44 @@ export default RegistrationScreen = () => {
             <View
               style={{
                 ...styles.image,
-                marginBottom: isShowKeyboard ? 110 : 0,
+                marginBottom:
+                  isShowKeyboard && Platform.OS === "android"
+                    ? 110
+                    : isShowKeyboard && Platform.OS === "ios"
+                    ? -200
+                    : 0,
               }}
             >
               <View style={styles.photo}>
-                <SvgXml
-                  width="25"
-                  height="25"
-                  xml={iconAdd}
-                  style={styles.iconAdd}
-                />
+                {!selectedImage ? (
+                  <TouchableOpacity onPress={handleImagePick}>
+                    <SvgXml
+                      width="25"
+                      height="25"
+                      xml={iconAdd}
+                      style={styles.iconAdd}
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <Image
+                    source={{ uri: selectedImage }}
+                    style={styles.photoImage}
+                  />
+                )}
               </View>
+              {selectedImage && (
+                <TouchableOpacity onPress={handleDeleteImage}>
+                  <SvgXml
+                    width="37"
+                    height="37"
+                    xml={iconDelete}
+                    style={styles.iconDelete}
+                  />
+                </TouchableOpacity>
+              )}
+
               <View style={{ ...styles.form }}>
-                <Text style={styles.title}>Реєстрація</Text>
+                <Text style={styles.title}>Registration</Text>
                 <View style={styles.inputWrapper}>
                   <TextInput
                     onFocus={handleFocusLogin}
@@ -136,8 +202,12 @@ export default RegistrationScreen = () => {
                       borderColor: loginBorderColor,
                       backgroundColor: loginBgColor,
                     }}
-                    placeholder="Логін"
+                    placeholder="Login"
                     placeholderTextColor="#BDBDBD"
+                    value={state.login}
+                    onChangeText={(value) =>
+                      setState((prevState) => ({ ...prevState, login: value }))
+                    }
                   />
                   <TextInput
                     onFocus={handleFocusEmail}
@@ -147,10 +217,14 @@ export default RegistrationScreen = () => {
                       borderColor: emailBorderColor,
                       backgroundColor: emailBgColor,
                     }}
-                    placeholder="Адреса електронної пошти"
+                    placeholder="Email address"
                     keyboardType="email-address"
                     autoComplete="email"
                     placeholderTextColor="#BDBDBD"
+                    value={state.email}
+                    onChangeText={(value) =>
+                      setState((prevState) => ({ ...prevState, email: value }))
+                    }
                   />
                   <View style={styles.inputPassword}>
                     <TextInput
@@ -163,14 +237,21 @@ export default RegistrationScreen = () => {
                       }}
                       secureTextEntry={!showPassword}
                       autoComplete="password"
-                      placeholder="Пароль"
+                      placeholder="Password"
                       placeholderTextColor="#BDBDBD"
+                      value={state.password}
+                      onChangeText={(value) =>
+                        setState((prevState) => ({
+                          ...prevState,
+                          password: value,
+                        }))
+                      }
                     />
                     <Text
                       style={styles.inputText}
                       onPress={handleTogglePassword}
                     >
-                      {showPassword ? "Приховати" : "Показати"}
+                      {showPassword ? "Hide" : "Show"}
                     </Text>
                   </View>
                 </View>
@@ -179,15 +260,17 @@ export default RegistrationScreen = () => {
                   style={styles.button}
                   onPress={keyboardHide}
                 >
-                  <Text style={styles.buttonText}>Зареєстуватися</Text>
+                  <Text style={styles.buttonText}>Sign up</Text>
                 </TouchableOpacity>
                 <View style={styles.wrapperQuestion}>
-                  <Text style={styles.questionText}>Вже є акаунт?</Text>
+                  <Text style={styles.questionText}>
+                    Already have an account?
+                  </Text>
                   <Text
                     style={styles.accountText}
                     onPress={() => navigation.navigate("Login")}
                   >
-                    Увійти
+                    Log In
                   </Text>
                 </View>
               </View>
@@ -238,10 +321,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "#F6F6F6",
   },
+  photoImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 16,
+  },
   iconAdd: {
     position: "absolute",
     top: 80,
     left: 107,
+  },
+  iconDelete: {
+    position: "absolute",
+    top: 15,
+    left: 229,
   },
   title: {
     fontFamily: "Roboto-Medium",
@@ -263,7 +356,7 @@ const styles = StyleSheet.create({
     fontStyle: "normal",
     width: "100%",
     height: 50,
-    paddingVertical: 16,
+    paddingVertical: 15,
     paddingHorizontal: 15,
     fontSize: 16,
     borderWidth: 1,
@@ -277,7 +370,7 @@ const styles = StyleSheet.create({
   inputText: {
     fontFamily: "Roboto-Regular",
     position: "absolute",
-    top: "26%",
+    top: "27%",
     right: 16,
     color: "#1B4371",
     fontSize: 16,
