@@ -12,15 +12,18 @@ import {
   TouchableWithoutFeedback,
   Dimensions,
   ImageBackground,
-  Image,
   Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { SvgXml } from "react-native-svg";
-import * as ImagePicker from "expo-image-picker";
+// import { SvgXml } from "react-native-svg";
+// import * as ImagePicker from "expo-image-picker";
 
-import BackgroundImage from "../assets/images/photo-bg.jpg";
-import { iconAdd, iconDelete } from "../assets/images/icons";
+import ImageAvatar from "../../Components/ImageAvatar";
+
+import BackgroundImage from "../../assets/images/photo-bg.jpg";
+// import { iconAdd, iconDelete } from "../assets/images/icons";
+// import IconAdd from "../../assets/images/iconAdd.svg";
+// import IconDelete from "../../assets/images/iconDelete.svg";
 
 const initialState = {
   login: "",
@@ -38,7 +41,7 @@ export default RegistrationScreen = () => {
   const [isFocusedPassword, setIsFocusedPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  // const [selectedImage, setSelectedImage] = useState(null);
   const [state, setState] = useState(initialState);
 
   const handleKeyboardDidShow = () => {
@@ -72,6 +75,10 @@ export default RegistrationScreen = () => {
       // console.log(emailRegex.test(state.email));
       console.log(state);
       setState(initialState);
+      navigation.navigate("HomeScreen", {
+        login: state.login,
+        email: state.email,
+      });
     } else {
       // console.log(emailRegex.test(state.email));
       Alert.alert(
@@ -122,29 +129,6 @@ export default RegistrationScreen = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleImagePick = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
-    }
-
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!pickerResult.canceled && pickerResult.assets.length > 0) {
-      setSelectedImage(pickerResult.assets[0].uri);
-    }
-  };
-
-  const handleDeleteImage = () => {
-    setSelectedImage(null);
-  };
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -163,33 +147,12 @@ export default RegistrationScreen = () => {
                     : 0,
               }}
             >
-              <View style={styles.photo}>
-                {!selectedImage ? (
-                  <TouchableOpacity onPress={handleImagePick}>
-                    <SvgXml
-                      width="25"
-                      height="25"
-                      xml={iconAdd}
-                      style={styles.iconAdd}
-                    />
-                  </TouchableOpacity>
-                ) : (
-                  <Image
-                    source={{ uri: selectedImage }}
-                    style={styles.photoImage}
-                  />
-                )}
-              </View>
-              {selectedImage && (
-                <TouchableOpacity onPress={handleDeleteImage}>
-                  <SvgXml
-                    width="37"
-                    height="37"
-                    xml={iconDelete}
-                    style={styles.iconDelete}
-                  />
-                </TouchableOpacity>
-              )}
+              <ImageAvatar
+                wrapperPhoto={styles.photo}
+                photoImage={styles.photoImage}
+                iconAdd={styles.iconAdd}
+                iconDelete={styles.iconDelete}
+              />
 
               <View style={{ ...styles.form }}>
                 <Text style={styles.title}>Registration</Text>
@@ -266,12 +229,12 @@ export default RegistrationScreen = () => {
                   <Text style={styles.questionText}>
                     Already have an account?
                   </Text>
-                  <Text
-                    style={styles.accountText}
+                  <TouchableOpacity
+                    activeOpacity={0.5}
                     onPress={() => navigation.navigate("Login")}
                   >
-                    Log In
-                  </Text>
+                    <Text style={styles.accountText}>Log In</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>

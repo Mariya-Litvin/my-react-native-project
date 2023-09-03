@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
-import BackgroundImage from "../assets/images/photo-bg.jpg";
+import BackgroundImage from "../../assets/images/photo-bg.jpg";
 
 const initialState = {
   email: "",
@@ -64,6 +64,7 @@ export default LoginScreen = () => {
       // console.log(emailRegex.test(state.email));
       console.log(state);
       setState(initialState);
+      navigation.navigate("HomeScreen", { email: state.email });
     } else {
       // console.log(emailRegex.test(state.email));
       Alert.alert(
@@ -178,12 +179,12 @@ export default LoginScreen = () => {
                   <Text style={styles.questionText}>
                     Don't have an account?
                   </Text>
-                  <Text
-                    style={styles.accountText}
+                  <TouchableOpacity
+                    activeOpacity={0.5}
                     onPress={() => navigation.navigate("Registration")}
                   >
-                    Sign up
-                  </Text>
+                    <Text style={styles.accountText}>Sign up</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
